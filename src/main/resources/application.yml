@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: es-rest-client-demo
+server:
+  port: 8082
+
+# elasticsearch 相关配置
+elasticsearch:
+  cluster-name: elasticsearch
+  cluster-nodes: 127.0.0.1:9200
+  index:
+    number-of-replicas: 2
+    number-of-shards: 3
+  account:
+    username:
+    password:
+
+
+
