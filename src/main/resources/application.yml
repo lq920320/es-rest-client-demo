@@ -4,6 +4,16 @@ spring:
 server:
   port: 8082
 
+# 健康管理
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,metrics"
+  endpoint:
+    health:
+      show-details: always
+
 # elasticsearch 相关配置
 elasticsearch:
   cluster-name: elasticsearch

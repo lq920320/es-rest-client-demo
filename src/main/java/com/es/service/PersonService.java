@@ -12,6 +12,14 @@ import java.util.List;
 public interface PersonService {
 
     /**
+     * check index if exists
+     *
+     * @param index elasticsearch index name
+     * @return exists
+     */
+    boolean checkIndexExists(String index);
+
+    /**
      * create Index
      *
      * @param index elasticsearch index name

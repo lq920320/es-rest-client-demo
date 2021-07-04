@@ -19,6 +19,7 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.CreateIndexResponse;
+import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentType;
@@ -56,6 +57,22 @@ public abstract class BaseEsService {
         // 默认缓冲限制为100MB，此处修改为50MB。
         builder.setHttpAsyncResponseConsumerFactory(new HttpAsyncResponseConsumerFactory.HeapBufferedResponseConsumerFactory(50 * 1024 * 1024));
         COMMON_OPTIONS = builder.build();
+    }
+
+    /**
+     * check index if exists
+     *
+     * @param index elasticsearch index name
+     * @return exists
+     */
+    protected boolean checkIndexExistsRequest(String index) {
+        try {
+            GetIndexRequest indexRequest = new GetIndexRequest(index);
+            return client.indices().exists(indexRequest, COMMON_OPTIONS);
+        } catch (IOException e) {
+            log.error("Failed to check index. {}", index, e);
+            throw new ElasticsearchException("检查索引 {" + index + "} 是否存在失败");
+        }
     }
 
     /**

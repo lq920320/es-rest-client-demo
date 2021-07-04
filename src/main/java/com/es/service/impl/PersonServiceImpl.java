@@ -32,6 +32,12 @@ import java.util.*;
 public class PersonServiceImpl extends BaseEsService implements PersonService {
 
     @Override
+    public boolean checkIndexExists(String index) {
+        return checkIndexExistsRequest(index);
+    }
+
+
+    @Override
     public void createIndex(String index) {
         createIndexRequest(index);
     }
