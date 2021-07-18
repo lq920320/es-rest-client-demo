@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.delete.DeleteResponse;
+import org.elasticsearch.action.get.GetRequest;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
@@ -55,12 +57,15 @@ public class PersonServiceImpl extends BaseEsService implements PersonService {
 
     @Override
     public Person getById(Long id) {
-        SearchResponse searchResponse = searchById(EsConstant.INDEX_NAME, String.valueOf(id));
-        List<Person> personList = convertPersonList(searchResponse);
-        if (CollectionUtils.isEmpty(personList)) {
+        GetRequest getRequest = new GetRequest(EsConstant.INDEX_NAME).id(String.valueOf(id));
+        try {
+            GetResponse response = client.get(getRequest, COMMON_OPTIONS);
+            Map<String, Object> sourceAsMap = response.getSourceAsMap();
+            return BeanUtil.mapToBean(sourceAsMap, Person.class, false, new CopyOptions());
+        } catch (IOException e) {
+            log.error("Failed to get doc of id: {}", id, e);
             return null;
         }
-        return personList.get(0);
     }
 
     private List<Person> convertPersonList(SearchResponse searchResponse) {
