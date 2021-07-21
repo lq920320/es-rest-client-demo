@@ -2,6 +2,8 @@ package com.es;
 
 import com.es.common.constants.EsConstant;
 import com.es.service.BookService;
+import com.es.service.EsService;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,13 +20,23 @@ public class BookEsTests {
 
     @Autowired
     private BookService bookService;
+    @Autowired
+    private EsService esService;
+
+    /**
+     * 检查索引是否存在
+     */
+    @Test
+    public void checkIndexExistTest() {
+        Assert.assertTrue(esService.checkIndexExists(EsConstant.BOOK_INDEX_NAME));
+    }
 
     /**
      * 创建索引
      */
     @Test
     public void createIndexTest() {
-        bookService.createIndex(EsConstant.BOOK_INDEX_NAME);
+        esService.createIndex(EsConstant.BOOK_INDEX_NAME);
     }
 
     /**
@@ -32,7 +44,7 @@ public class BookEsTests {
      */
     @Test
     public void deleteIndexTest() {
-        bookService.deleteIndex(EsConstant.BOOK_INDEX_NAME);
+        esService.deleteIndex(EsConstant.BOOK_INDEX_NAME);
     }
 
     /**

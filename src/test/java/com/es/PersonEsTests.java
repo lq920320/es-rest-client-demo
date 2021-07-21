@@ -2,9 +2,11 @@ package com.es;
 
 import com.es.common.constants.EsConstant;
 import com.es.model.person.Person;
+import com.es.service.EsService;
 import com.es.service.PersonService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,13 +23,23 @@ public class PersonEsTests {
 
     @Autowired
     private PersonService personService;
+    @Autowired
+    private EsService esService;
+
+    /**
+     * 检查索引是否存在
+     */
+    @Test
+    public void checkIndexExistTest() {
+        Assert.assertTrue(esService.checkIndexExists(EsConstant.INDEX_NAME));
+    }
 
     /**
      * 创建索引
      */
     @Test
     public void createIndexTest() {
-        personService.createIndex(EsConstant.INDEX_NAME);
+        esService.createIndex(EsConstant.INDEX_NAME);
     }
 
     /**
@@ -35,7 +47,7 @@ public class PersonEsTests {
      */
     @Test
     public void deleteIndexTest() {
-        personService.deleteIndex(EsConstant.INDEX_NAME);
+        esService.deleteIndex(EsConstant.INDEX_NAME);
     }
 
     /**

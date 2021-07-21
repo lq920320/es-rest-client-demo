@@ -1,26 +1,23 @@
-package com.es.model.book;
+package com.es.dto.book;
 
+import com.es.model.book.BookAuthor;
+import com.es.model.book.Category;
+import com.es.model.book.Press;
+import com.es.model.book.ShelvesShop;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
 /**
+ * 更新图书信息
+ *
  * @author zetu
- * @date 2021/5/10
+ * @date 2021/7/21
  */
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Accessors(chain = true)
-public class Book implements Serializable {
-
-    private static final long serialVersionUID = -1448455998070660980L;
+public class ModifyBookReq {
 
     @ApiModelProperty("主键ID")
     private Long id;
@@ -30,9 +27,6 @@ public class Book implements Serializable {
 
     @ApiModelProperty("书名")
     private String bookName;
-
-    @ApiModelProperty("封面")
-    private String cover;
 
     @ApiModelProperty("作者")
     private List<BookAuthor> authors;
@@ -60,5 +54,4 @@ public class Book implements Serializable {
 
     @ApiModelProperty("售价")
     private Double price;
-
 }

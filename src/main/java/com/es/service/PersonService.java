@@ -1,6 +1,6 @@
 package com.es.service;
 
-import com.es.model.person.ModifyPersonReq;
+import com.es.dto.person.ModifyPersonReq;
 import com.es.model.person.Person;
 
 import java.util.List;
@@ -10,28 +10,6 @@ import java.util.List;
  * @date 2021/5/10
  */
 public interface PersonService {
-
-    /**
-     * check index if exists
-     *
-     * @param index elasticsearch index name
-     * @return exists
-     */
-    boolean checkIndexExists(String index);
-
-    /**
-     * create Index
-     *
-     * @param index elasticsearch index name
-     */
-    void createIndex(String index);
-
-    /**
-     * delete Index
-     *
-     * @param index elasticsearch index name
-     */
-    void deleteIndex(String index);
 
     /**
      * 获取所有数据

@@ -3,12 +3,11 @@ package com.es.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import com.es.common.constants.EsConstant;
-import com.es.model.person.ModifyPersonReq;
+import com.es.dto.person.ModifyPersonReq;
 import com.es.model.person.Person;
 import com.es.service.PersonService;
 import com.es.service.base.BaseEsService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetRequest;
@@ -32,22 +31,6 @@ import java.util.*;
 @Service
 @Slf4j
 public class PersonServiceImpl extends BaseEsService implements PersonService {
-
-    @Override
-    public boolean checkIndexExists(String index) {
-        return checkIndexExistsRequest(index);
-    }
-
-
-    @Override
-    public void createIndex(String index) {
-        createIndexRequest(index);
-    }
-
-    @Override
-    public void deleteIndex(String index) {
-        deleteIndexRequest(index);
-    }
 
     @Override
     public List<Person> searchList() {

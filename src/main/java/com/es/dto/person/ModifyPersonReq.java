@@ -1,4 +1,4 @@
-package com.es.model.person;
+package com.es.dto.person;
 
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;

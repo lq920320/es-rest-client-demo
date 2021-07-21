@@ -1,5 +1,10 @@
 package com.es.service;
 
+import com.es.dto.book.SearchBookReq;
+import com.es.dto.book.SearchBookRes;
+import com.es.model.book.Book;
+import com.es.dto.book.ModifyBookReq;
+
 /**
  * @author zetu
  * @date 2021/5/10
@@ -7,18 +12,28 @@ package com.es.service;
 public interface BookService {
 
     /**
-     * create Index
+     * 根据ID获取数据
      *
-     * @param index elasticsearch index name
+     * @param id 文档ID
+     * @return 详情
      */
-    void createIndex(String index);
+    Book getById(Long id);
 
     /**
-     * delete Index
+     * 添加数据
      *
-     * @param index elasticsearch index name
+     * @param modifyReq 更新请求体
+     * @return 更新结果
      */
-    void deleteIndex(String index);
+    Boolean add(ModifyBookReq modifyReq);
+
+    /**
+     * 更新数据
+     *
+     * @param modifyReq 更新请求体
+     * @return
+     */
+    Boolean update(ModifyBookReq modifyReq);
 
 
     /**
@@ -28,4 +43,12 @@ public interface BookService {
      * @return
      */
     Boolean delete(Long id);
+
+    /**
+     * 搜索图书信息
+     *
+     * @param searchReq 查询参数
+     * @return {@link SearchBookRes} 响应结果
+     */
+    SearchBookRes searchBook(SearchBookReq searchReq);
 }

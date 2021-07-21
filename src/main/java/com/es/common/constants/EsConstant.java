@@ -16,4 +16,14 @@ public interface EsConstant {
      */
     String BOOK_INDEX_NAME = "book";
 
+    /**
+     * 排序-升序
+     */
+    String ASC = "ASC";
+
+    /**
+     * 排序-降序
+     */
+    String DESC = "DESC";
+
 }

@@ -1,8 +1,7 @@
 package com.es.controllers;
 
-import com.es.common.constants.EsConstant;
 import com.es.common.result.Result;
-import com.es.model.person.ModifyPersonReq;
+import com.es.dto.person.ModifyPersonReq;
 import com.es.model.person.Person;
 import com.es.service.PersonService;
 import io.swagger.annotations.Api;
