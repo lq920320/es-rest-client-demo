@@ -36,13 +36,10 @@ public class SearchBookReq {
     @ApiModelProperty("书籍分类Id")
     private Integer categoryId;
 
-    @ApiModelProperty("已上架的店铺ID列表")
-    private List<String> shelvesShopIds;
-
-    @ApiModelProperty("发布时间区间起始，时间格式：yyyy-MM-dd")
+    @ApiModelProperty("发版时间区间起始，时间格式：yyyy-MM-dd")
     private String publishTimeStart;
 
-    @ApiModelProperty("发布时间区间末端，时间格式：yyyy-MM-dd")
+    @ApiModelProperty("发版时间区间末端，时间格式：yyyy-MM-dd")
     private String publishTimeEnd;
 
     @ApiModelProperty("出版社Id")
@@ -59,4 +56,10 @@ public class SearchBookReq {
 
     @ApiModelProperty("排序顺序")
     private SortEnum sort;
+
+    @ApiModelProperty("分页页码")
+    private Integer page;
+
+    @ApiModelProperty("分页大小")
+    private Integer pageSize;
 }

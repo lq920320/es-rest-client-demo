@@ -49,9 +49,6 @@ public class Book implements Serializable {
     @ApiModelProperty("书籍分类链路")
     private List<Category> categoryChain;
 
-    @ApiModelProperty("已上架的店铺")
-    private List<ShelvesShop> shelvesShops;
-
     @ApiModelProperty("发布时间")
     private LocalDateTime publishTime;
 

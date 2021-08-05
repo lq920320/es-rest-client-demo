@@ -11,13 +11,17 @@ import com.es.model.book.Book;
 import com.es.service.BookService;
 import com.es.service.base.BaseEsService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateFormatUtils;
+import org.apache.commons.lang3.time.DateUtils;
+import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.*;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -25,6 +29,7 @@ import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.*;
 
 /**
@@ -34,6 +39,8 @@ import java.util.*;
 @Service
 @Slf4j
 public class BookServiceImpl extends BaseEsService implements BookService {
+
+    private static final String DATE_PATTERN = "yyyy-MM-dd";
 
     @Override
     public Book getById(Long id) {
@@ -75,6 +82,7 @@ public class BookServiceImpl extends BaseEsService implements BookService {
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(boolQuery);
 
+        // sortField 排序字段，sort 排序顺序
         if (Objects.nonNull(searchReq.getSortField())) {
             // 解析排序参数
             SortOrder sortOrder = SortOrder.ASC;
@@ -136,9 +144,100 @@ public class BookServiceImpl extends BaseEsService implements BookService {
      * @return {@link BoolQueryBuilder} 聚合查询条件
      */
     private BoolQueryBuilder buildBookBoolQuery(SearchBookReq searchReq) {
-        // TODO
+        // 总的聚合查询
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
 
+        // isbnNo 图书编码，这里是精确搜索
+        if (StringUtils.isNotBlank(searchReq.getIsbnNo())) {
+            TermQueryBuilder isbnNoQuery = QueryBuilders.termQuery("isbnNo", searchReq.getIsbnNo());
+            // 使用 must 聚合
+            boolQuery.must(isbnNoQuery);
+        }
+
+        // bookName 图书名称，模糊搜索
+        if (StringUtils.isNotBlank(searchReq.getBookName())) {
+            // 模糊搜索，使用短语匹配
+            MatchPhraseQueryBuilder bookNameQuery = QueryBuilders.matchPhraseQuery("bookName", searchReq.getBookName());
+            // 另外一种模糊匹配功能与 sql 中 like '%%' 相似，两端需要加上匹配符
+//            WildcardQueryBuilder bookNameQuery2 = QueryBuilders.wildcardQuery("bookName", "*" + searchReq.getBookName() + "*");
+            // 使用 must 聚合
+            boolQuery.must(bookNameQuery);
+        }
+
+        // 此处根据图书作者进行搜索，只是为了说明情况，不一定用于真实应用场景，大家可以由此进行类推
+        // bookAuthorLastName 图书作者姓氏，bookAuthorFirstName 图书作者名字，查询作者名称的时候既要满足姓氏，也要满足名字
+        if (StringUtils.isNotBlank(searchReq.getBookAuthorLastName()) && StringUtils.isNotBlank(searchReq.getBookAuthorFirstName())) {
+            // 满足两个条件的，需要使用 nested 嵌套结构，查询使用
+            BoolQueryBuilder nameQuery = QueryBuilders.boolQuery();
+            nameQuery.must(QueryBuilders.termQuery("authors.lastName", searchReq.getBookAuthorLastName()
+                    .toLowerCase(Locale.ROOT)));
+            nameQuery.must(QueryBuilders.termQuery("authors.firstName", searchReq.getBookAuthorFirstName()
+                    .toLowerCase(Locale.ROOT)));
+
+            NestedQueryBuilder authorNameQuery = QueryBuilders.nestedQuery("authors", nameQuery, ScoreMode.Max);
+            // 使用 must 聚合
+            boolQuery.must(authorNameQuery);
+        }
+
+        // tags 图书标签，多选，多个匹配
+        if (CollectionUtils.isNotEmpty(searchReq.getTags())) {
+            // 多个标签进行匹配，多个匹配
+            TermsQueryBuilder tagsQuery = QueryBuilders.termsQuery("tags", searchReq.getTags());
+            // 使用 must 聚合
+            boolQuery.must(tagsQuery);
+        }
+
+        // introduction 图书介绍，全文搜索，以及匹配样式返回
+        if (StringUtils.isNotBlank(searchReq.getIntroduction())) {
+            // TODO
+        }
+
+        // categoryId 类别搜索，在 categoryChain 中匹配
+        if (searchReq.getCategoryId() != null) {
+            TermQueryBuilder categoryQuery = QueryBuilders.termQuery("categoryChain.id", searchReq.getCategoryId());
+            // 使用 must 进行聚合
+            boolQuery.must(categoryQuery);
+        }
+
+        // publishTimeStart 发版时间区间起始，publishTimeEnd 发版时间区间末端，使用区间搜索
+        if (StringUtils.isNotBlank(searchReq.getPublishTimeStart()) && StringUtils.isNotBlank(searchReq.getPublishTimeEnd())) {
+            RangeQueryBuilder publishTimeQuery = QueryBuilders.rangeQuery("publishTime");
+            // from 大于等于
+            publishTimeQuery.gte(searchReq.getPublishTimeStart());
+            // to 小于等于
+            try {
+                publishTimeQuery.lte(DateFormatUtils.format(
+                        DateUtils.addDays(DateUtils.parseDate(searchReq.getPublishTimeEnd(), DATE_PATTERN), 1),
+                        DATE_PATTERN));
+            } catch (ParseException e) {
+                log.error("failed to parse string to date, {}.", searchReq.getPublishTimeEnd(), e);
+            }
+            // 使用 must 进行聚合
+            boolQuery.must(publishTimeQuery);
+        }
+
+        // pressId 出版社ID，精确匹配
+        if (StringUtils.isNotBlank(searchReq.getPressId())) {
+            TermQueryBuilder pressQuery = QueryBuilders.termQuery("press.pressId", searchReq.getPressId());
+            // 使用 must 进行聚合
+            boolQuery.must(pressQuery);
+        }
+
+        // priceStart 售价范围起始，priceEnd 售价范围末端，使用区间搜索
+        if (searchReq.getPriceStart() != null) {
+            RangeQueryBuilder priceStartQuery = QueryBuilders.rangeQuery("price");
+            // from 大于等于
+            priceStartQuery.gte(searchReq.getPriceStart());
+            // 使用 must 进行聚合
+            boolQuery.must(priceStartQuery);
+        }
+        if (searchReq.getPriceEnd() != null) {
+            RangeQueryBuilder priceEndQuery = QueryBuilders.rangeQuery("price");
+            // to 小于等于
+            priceEndQuery.lte(searchReq.getPriceEnd());
+            // 使用 must 进行聚合
+            boolQuery.must(priceEndQuery);
+        }
 
         return boolQuery;
     }
