@@ -5,7 +5,11 @@ import com.es.model.book.Category;
 import com.es.model.book.Press;
 import com.es.model.book.ShelvesShop;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.Accessors;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,6 +21,9 @@ import java.util.List;
  * @date 2021/7/21
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class ModifyBookReq {
 
     @ApiModelProperty("主键ID")
@@ -42,9 +49,6 @@ public class ModifyBookReq {
 
     @ApiModelProperty("书籍分类链路")
     private List<Category> categoryChain;
-
-    @ApiModelProperty("已上架的店铺")
-    private List<ShelvesShop> shelvesShops;
 
     @ApiModelProperty("发布时间")
     private LocalDateTime publishTime;

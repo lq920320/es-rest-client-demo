@@ -5,6 +5,8 @@ import com.es.dto.book.SearchBookRes;
 import com.es.model.book.Book;
 import com.es.dto.book.ModifyBookReq;
 
+import java.util.List;
+
 /**
  * @author zetu
  * @date 2021/5/10
@@ -26,6 +28,15 @@ public interface BookService {
      * @return 更新结果
      */
     Boolean add(ModifyBookReq modifyReq);
+
+
+    /**
+     * 添加数据
+     *
+     * @param list 数据列表
+     * @return 更新结果
+     */
+    Boolean addList(List<ModifyBookReq> list);
 
     /**
      * 更新数据

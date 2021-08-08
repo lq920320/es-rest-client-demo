@@ -16,15 +16,21 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.apache.lucene.search.join.ScoreMode;
+import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.stereotype.Service;
 
@@ -57,14 +63,58 @@ public class BookServiceImpl extends BaseEsService implements BookService {
 
     @Override
     public Boolean add(ModifyBookReq modifyReq) {
-        // TODO
-        return null;
+        IndexRequest request = buildIndexRequest(EsConstant.BOOK_INDEX_NAME, String.valueOf(modifyReq.getId()), modifyReq);
+        try {
+            client.index(request, COMMON_OPTIONS);
+            return true;
+        } catch (IOException e) {
+            log.error("Failed to insert.", e);
+        }
+        return false;
+    }
+
+    @Override
+    public Boolean addList(List<ModifyBookReq> list) {
+        insertList(list);
+        return true;
+    }
+
+    private void insertList(List<ModifyBookReq> list) {
+        BulkRequest bulkRequest = new BulkRequest();
+        String index = EsConstant.BOOK_INDEX_NAME;
+        list.forEach(book -> {
+            IndexRequest request = buildIndexRequest(index, String.valueOf(book.getId()), book);
+            UpdateRequest updateRequest = buildUpdateRequest(index, String.valueOf(book.getId()), book).upsert(request);
+
+            bulkRequest.add(updateRequest);
+        });
+        try {
+            client.bulkAsync(bulkRequest, COMMON_OPTIONS, new ActionListener<BulkResponse>() {
+                @Override
+                public void onResponse(BulkResponse bulkItemResponses) {
+                    log.info("success to insert a book bulk data, size : {}", bulkRequest.numberOfActions());
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    log.error("failed to insert a book bulk data", e);
+                }
+            });
+        } catch (Exception e) {
+            log.error("Failed to insert batch", e);
+        }
     }
 
     @Override
     public Boolean update(ModifyBookReq modifyReq) {
-        // TODO
-        return null;
+        UpdateRequest request = buildUpdateRequest(EsConstant.BOOK_INDEX_NAME, String.valueOf(modifyReq.getId()), modifyReq);
+        try {
+            client.update(request, COMMON_OPTIONS);
+            return true;
+        } catch (IOException e) {
+            log.error("Failed to insert.", e);
+        }
+        return false;
     }
 
     @Override
@@ -81,6 +131,10 @@ public class BookServiceImpl extends BaseEsService implements BookService {
         SearchRequest searchRequest = new SearchRequest(EsConstant.BOOK_INDEX_NAME);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(boolQuery);
+        // 高亮字段
+        HighlightBuilder highlightBuilder = new HighlightBuilder();
+        highlightBuilder.field("introduction");
+        searchSourceBuilder.highlighter(highlightBuilder);
 
         // sortField 排序字段，sort 排序顺序
         if (Objects.nonNull(searchReq.getSortField())) {
@@ -159,7 +213,7 @@ public class BookServiceImpl extends BaseEsService implements BookService {
             // 模糊搜索，使用短语匹配
             MatchPhraseQueryBuilder bookNameQuery = QueryBuilders.matchPhraseQuery("bookName", searchReq.getBookName());
             // 另外一种模糊匹配功能与 sql 中 like '%%' 相似，两端需要加上匹配符
-//            WildcardQueryBuilder bookNameQuery2 = QueryBuilders.wildcardQuery("bookName", "*" + searchReq.getBookName() + "*");
+//            WildcardQueryBuilder bookNameQuery2 = QueryBuilders.wildcardQuery("bookName.keyword", "*" + searchReq.getBookName() + "*");
             // 使用 must 聚合
             boolQuery.must(bookNameQuery);
         }
@@ -187,7 +241,7 @@ public class BookServiceImpl extends BaseEsService implements BookService {
             boolQuery.must(tagsQuery);
         }
 
-        // introduction 图书介绍，全文搜索，以及匹配样式返回
+        // introduction 图书介绍，全文搜索，以及匹配高亮样式返回
         if (StringUtils.isNotBlank(searchReq.getIntroduction())) {
             // TODO
         }
