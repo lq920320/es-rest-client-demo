@@ -17,6 +17,11 @@ public interface EsConstant {
     String BOOK_INDEX_NAME = "book";
 
     /**
+     * 书籍索引名称
+     */
+    String BOOK_INDEX_2_NAME = "book2";
+
+    /**
      * 排序-升序
      */
     String ASC = "ASC";

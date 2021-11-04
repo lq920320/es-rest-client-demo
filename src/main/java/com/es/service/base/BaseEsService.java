@@ -2,6 +2,7 @@ package com.es.service.base;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.json.JSONUtil;
+import com.es.common.constants.EsConstant;
 import com.es.config.ElasticsearchProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.ElasticsearchException;
@@ -22,6 +23,8 @@ import org.elasticsearch.client.indices.CreateIndexResponse;
 import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.unit.TimeValue;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -87,6 +90,32 @@ public abstract class BaseEsService {
             request.settings(Settings.builder()
                     .put("index.number_of_shards", elasticsearchProperties.getIndex().getNumberOfShards())
                     .put("index.number_of_replicas", elasticsearchProperties.getIndex().getNumberOfReplicas()));
+
+            if (EsConstant.BOOK_INDEX_2_NAME.equals(index)) {
+                // set ID mapping
+                XContentBuilder builder = XContentFactory.jsonBuilder();
+                builder.startObject();
+                {
+                    builder.startObject("properties");
+                    {
+                        builder.startObject("authors");
+                        {
+                            builder.field("type", "nested");
+                        }
+                        builder.endObject();
+                    }
+                    {
+                        builder.startObject("isbnNo");
+                        {
+                            builder.field("type", "keyword");
+                        }
+                        builder.endObject();
+                    }
+                    builder.endObject();
+                }
+                builder.endObject();
+                request.mapping(builder);
+            }
 
             CreateIndexResponse createIndexResponse = client.indices().create(request, COMMON_OPTIONS);
 

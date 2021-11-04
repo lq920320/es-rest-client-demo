@@ -29,4 +29,13 @@ public interface EsService {
      * @param index elasticsearch index name
      */
     void deleteIndex(String index);
+
+    /**
+     * reindex
+     * copy data of sourceIndex to targetIndex
+     *
+     * @param sourceIndex source index name
+     * @param targetIndex target index name
+     */
+    void reindex(String sourceIndex, String targetIndex);
 }

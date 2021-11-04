@@ -6,6 +6,7 @@ import com.es.model.book.BookAuthor;
 import com.es.model.book.Press;
 import com.es.service.BookService;
 import com.es.service.EsService;
+import io.micrometer.core.instrument.util.TimeUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,6 +17,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author zetu
@@ -44,6 +46,32 @@ public class BookEsTests {
     @Test
     public void createIndexTest() {
         esService.createIndex(EsConstant.BOOK_INDEX_NAME);
+    }
+
+    /**
+     * 创建索引
+     */
+    @Test
+    public void createIndex2Test() {
+        esService.createIndex(EsConstant.BOOK_INDEX_2_NAME);
+    }
+
+    /**
+     * 创建索引
+     */
+    @Test
+    public void reindexTest() throws InterruptedException {
+        boolean indexExists = esService.checkIndexExists(EsConstant.BOOK_INDEX_2_NAME);
+        System.out.println("book2的索引是否存在: " + indexExists);
+        if (indexExists) {
+            System.out.println("删除book2的索引");
+            esService.deleteIndex(EsConstant.BOOK_INDEX_2_NAME);
+        }
+        Thread.sleep(10000);
+        System.out.println("book2的索引是否存在: " + indexExists);
+        Assert.assertFalse(indexExists);
+        esService.reindex(EsConstant.BOOK_INDEX_NAME, EsConstant.BOOK_INDEX_2_NAME);
+        Thread.sleep(10000);
     }
 
     /**
