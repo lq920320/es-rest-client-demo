@@ -211,9 +211,11 @@ public class BookServiceImpl extends BaseEsService implements BookService {
         // bookName 图书名称，模糊搜索
         if (StringUtils.isNotBlank(searchReq.getBookName())) {
             // 模糊搜索，使用短语匹配
-            MatchPhraseQueryBuilder bookNameQuery = QueryBuilders.matchPhraseQuery("bookName", searchReq.getBookName());
+            BoolQueryBuilder bookNameQuery = QueryBuilders.boolQuery();
+            bookNameQuery.should(QueryBuilders.matchQuery("bookName", searchReq.getBookName()));
+            bookNameQuery.should(QueryBuilders.matchPhraseQuery("bookName", searchReq.getBookName()));
             // 另外一种模糊匹配功能与 sql 中 like '%%' 相似，两端需要加上匹配符
-//            WildcardQueryBuilder bookNameQuery2 = QueryBuilders.wildcardQuery("bookName.keyword", "*" + searchReq.getBookName() + "*");
+//            bookNameQuery.should(QueryBuilders.wildcardQuery("bookName.keyword", "*" + searchReq.getBookName() + "*"));
             // 使用 must 聚合
             boolQuery.must(bookNameQuery);
         }
