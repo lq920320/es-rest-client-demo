@@ -5,9 +5,13 @@ import com.es.service.EsService;
 import com.es.service.base.BaseEsService;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.action.ActionListener;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermQueryBuilder;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.ReindexRequest;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.stereotype.Service;
 
 /**
@@ -60,6 +64,14 @@ public class EsServiceImpl extends BaseEsService implements EsService {
                 log.error("reindex failed. ", e);
             }
         };
+
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        String[] includes = {};
+        String[] excludes = {"isbnNo"};
+        searchSourceBuilder.fetchSource(includes, excludes);
+
+        SearchRequest searchRequest = request.getSearchRequest();
+        searchRequest.source(searchSourceBuilder);
         // 异步reindex
         client.reindexAsync(request, COMMON_OPTIONS, listener);
     }

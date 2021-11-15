@@ -63,13 +63,13 @@ public class BookEsTests {
     public void reindexTest() throws InterruptedException {
         boolean indexExists = esService.checkIndexExists(EsConstant.BOOK_INDEX_2_NAME);
         System.out.println("book2的索引是否存在: " + indexExists);
-        if (indexExists) {
-            System.out.println("删除book2的索引");
-            esService.deleteIndex(EsConstant.BOOK_INDEX_2_NAME);
-        }
-        Thread.sleep(10000);
-        System.out.println("book2的索引是否存在: " + indexExists);
-        Assert.assertFalse(indexExists);
+//        if (indexExists) {
+//            System.out.println("删除book2的索引");
+//            esService.deleteIndex(EsConstant.BOOK_INDEX_2_NAME);
+//        }
+//        Thread.sleep(10000);
+//        System.out.println("book2的索引是否存在: " + indexExists);
+//        Assert.assertFalse(indexExists);
         esService.reindex(EsConstant.BOOK_INDEX_NAME, EsConstant.BOOK_INDEX_2_NAME);
         Thread.sleep(10000);
     }
