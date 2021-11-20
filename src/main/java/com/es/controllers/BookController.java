@@ -5,6 +5,7 @@ import com.es.dto.book.ModifyBookReq;
 import com.es.dto.book.SearchBookReq;
 import com.es.dto.book.SearchBookRes;
 import com.es.model.book.Book;
+import com.es.model.book.CategoryGroup;
 import com.es.service.BookService;
 import com.sun.org.apache.xpath.internal.operations.Bool;
 import io.swagger.annotations.Api;
@@ -46,6 +47,14 @@ public class BookController {
     public Result<List<Book>> searchBook(@RequestBody SearchBookReq searchReq) {
         SearchBookRes searchRes = bookService.searchBook(searchReq);
         return Result.success(searchRes.getBookList(), searchRes.getTotal());
+    }
+
+
+    @GetMapping("categoryGroup")
+    @ApiOperation("按照类目分组结果")
+    public Result<List<CategoryGroup>> categoryGroup() {
+        List<CategoryGroup> result = bookService.categoryGroup();
+        return Result.success(result);
     }
 
 }

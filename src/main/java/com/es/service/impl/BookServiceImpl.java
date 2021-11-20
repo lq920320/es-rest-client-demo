@@ -8,6 +8,7 @@ import com.es.dto.book.ModifyBookReq;
 import com.es.dto.book.SearchBookReq;
 import com.es.dto.book.SearchBookRes;
 import com.es.model.book.Book;
+import com.es.model.book.CategoryGroup;
 import com.es.service.BookService;
 import com.es.service.base.BaseEsService;
 import lombok.extern.slf4j.Slf4j;
@@ -29,8 +30,19 @@ import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.aggregations.AggregationBuilder;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.bucket.terms.ParsedLongTerms;
+import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.metrics.CardinalityAggregationBuilder;
+import org.elasticsearch.search.aggregations.metrics.ParsedCardinality;
+import org.elasticsearch.search.aggregations.metrics.ParsedTopHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.stereotype.Service;
 
@@ -158,6 +170,98 @@ public class BookServiceImpl extends BaseEsService implements BookService {
         }
 
         return convertToSearchRes(searchResponse);
+    }
+
+    @Override
+    public List<CategoryGroup> categoryGroup() {
+        SearchResponse groupSearchResponse = searchGroupData();
+        if (Objects.isNull(groupSearchResponse)) {
+            return Collections.emptyList();
+        }
+        Aggregations aggregations = groupSearchResponse.getAggregations();
+        List<CategoryGroup> groupList = new ArrayList<>();
+        if (Objects.nonNull(aggregations)) {
+            // 获取最外层的分组
+            ParsedLongTerms group = aggregations.get("group");
+            // 获取总数的 aggregation
+            ParsedCardinality totalCount = aggregations.get("total");
+            // 这里的总数我们暂时不返回，只是打印
+            log.info("得到分组的总数：{}", totalCount);
+            // 遍历得到的桶
+            for (Terms.Bucket bucket : group.getBuckets()) {
+                // 获取每个桶中的top1数据
+                ParsedTopHits topHits = bucket.getAggregations().get("price_top_1");
+                SearchHits groupHits = topHits.getHits();
+                SearchHit[] hits = groupHits.getHits();
+                List<Book> books = new ArrayList<>();
+                Arrays.stream(hits).forEach(hit -> {
+                    Map<String, Object> sourceAsMap = hit.getSourceAsMap();
+                    Book book = BeanUtil.mapToBean(sourceAsMap, Book.class, false, new CopyOptions());
+                    if (Objects.nonNull(book.getId())) {
+                        books.add(book);
+                    }
+                });
+                CategoryGroup categoryGroup = new CategoryGroup();
+                // 键值即为类目ID
+                categoryGroup.setCategoryId(Integer.valueOf(bucket.getKeyAsString()));
+                categoryGroup.setBooks(books);
+                groupList.add(categoryGroup);
+            }
+        }
+
+        return groupList;
+    }
+
+    /**
+     * 聚合搜索图书信息
+     *
+     * @return {@link SearchResponse}
+     */
+    private SearchResponse searchGroupData() {
+        // 构建搜索请求
+        SearchRequest searchRequest = new SearchRequest(EsConstant.BOOK_INDEX_NAME);
+
+        AggregationBuilder groupAggregation = AggregationBuilders
+                // 这里是定义的最外层聚合的名字
+                .terms("group")
+                // 这是返回的分组的数量，默认是10
+                .size(10)
+                // 要分组的字段
+                .field("categoryId");
+
+        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        // 不需要返回hits中的数据，设置 size 为 0
+        searchSourceBuilder.size(0);
+
+        // TOP hits 取图书的 top1
+        // 定义返回的字段
+        String[] includes = {"id", "bookName", "categoryId", "categoryName", "price"};
+        String[] excludes = {};
+        AggregationBuilder topHits = AggregationBuilders
+                // 自定义的topHits名称
+                .topHits("price_top_1")
+                // 按照价格倒序
+                .sort(SortBuilders.fieldSort("price").order(SortOrder.DESC))
+                .fetchSource(includes, excludes)
+                // 只取1条
+                .size(1);
+        // 将两个聚合结合起来，topHits 作为分组的子聚合
+        groupAggregation.subAggregation(topHits);
+
+        // 求分组之后的总数
+        CardinalityAggregationBuilder totalAggregation = AggregationBuilders.cardinality("total")
+                .field("categoryId");
+        // 把聚合放在搜索构造器里
+        searchSourceBuilder.aggregation(groupAggregation);
+        searchSourceBuilder.aggregation(totalAggregation);
+
+        searchRequest.source(searchSourceBuilder);
+        try {
+            return client.search(searchRequest, COMMON_OPTIONS);
+        } catch (IOException e) {
+            log.error("Failed to aggregations search data", e);
+        }
+        return null;
     }
 
     /**

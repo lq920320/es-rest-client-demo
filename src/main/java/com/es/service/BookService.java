@@ -4,6 +4,7 @@ import com.es.dto.book.SearchBookReq;
 import com.es.dto.book.SearchBookRes;
 import com.es.model.book.Book;
 import com.es.dto.book.ModifyBookReq;
+import com.es.model.book.CategoryGroup;
 
 import java.util.List;
 
@@ -62,4 +63,11 @@ public interface BookService {
      * @return {@link SearchBookRes} 响应结果
      */
     SearchBookRes searchBook(SearchBookReq searchReq);
+
+    /**
+     * 按照图书类目分组查询
+     *
+     * @return {@link List<CategoryGroup>}
+     */
+    List<CategoryGroup> categoryGroup();
 }

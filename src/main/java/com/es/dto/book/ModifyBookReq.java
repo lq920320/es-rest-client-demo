@@ -47,8 +47,11 @@ public class ModifyBookReq {
     @ApiModelProperty("图书介绍")
     private String introduction;
 
-    @ApiModelProperty("书籍分类链路")
-    private List<Category> categoryChain;
+    @ApiModelProperty("图书分类")
+    private Integer categoryId;
+
+    @ApiModelProperty("图书分类名称")
+    private String categoryName;
 
     @ApiModelProperty("发布时间")
     private LocalDateTime publishTime;
