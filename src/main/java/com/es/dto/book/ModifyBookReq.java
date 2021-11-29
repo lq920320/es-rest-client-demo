@@ -1,15 +1,12 @@
 package com.es.dto.book;
 
 import com.es.model.book.BookAuthor;
-import com.es.model.book.Category;
 import com.es.model.book.Press;
-import com.es.model.book.ShelvesShop;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
 
 import java.time.LocalDateTime;
 import java.util.List;

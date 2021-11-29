@@ -3,6 +3,7 @@ package com.es.service;
 import com.es.dto.book.ModifyBookReq;
 import com.es.dto.book.SearchBookReq;
 import com.es.dto.book.SearchBookRes;
+import com.es.dto.book.UpdatePricesReq;
 import com.es.model.book.Book;
 import com.es.model.book.CategoryGroup;
 
@@ -79,4 +80,12 @@ public interface BookService {
      * @return {@link List<CategoryGroup>}
      */
     List<CategoryGroup> categoryGroup();
+
+    /**
+     * 批量更新图书价格
+     *
+     * @param updateReq 更新价格请求体
+     * @return {@link Boolean} 更新结果
+     */
+    Boolean updatePrices(UpdatePricesReq updateReq);
 }

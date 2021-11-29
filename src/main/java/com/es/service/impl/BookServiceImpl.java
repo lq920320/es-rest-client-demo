@@ -7,6 +7,7 @@ import com.es.common.constants.EsConstant;
 import com.es.dto.book.ModifyBookReq;
 import com.es.dto.book.SearchBookReq;
 import com.es.dto.book.SearchBookRes;
+import com.es.dto.book.UpdatePricesReq;
 import com.es.model.book.Book;
 import com.es.model.book.CategoryGroup;
 import com.es.service.BookService;
@@ -27,6 +28,7 @@ import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
@@ -215,6 +217,33 @@ public class BookServiceImpl extends BaseEsService implements BookService {
         }
 
         return groupList;
+    }
+
+    @Override
+    public Boolean updatePrices(UpdatePricesReq updateReq) {
+        // TODO update bulk
+        List<Long> bookIds = updateReq.getBookIds();
+        Double price = updateReq.getPrice();
+        // 构建批量请求
+        BulkRequest bulkRequest = new BulkRequest();
+        Map<String, Object> map;
+        for (Long bookId : bookIds) {
+            map = new HashMap<>(2);
+            map.put("price", price);
+            UpdateRequest updateRequest = new UpdateRequest(EsConstant.BOOK_INDEX_NAME, String.valueOf(bookId))
+                    .doc(map, XContentType.JSON);
+            // 将请求加入到 bulk 请求中
+            bulkRequest.add(updateRequest);
+        }
+        try {
+            // 同步批量更新
+            BulkResponse bulkResponse = client.bulk(bulkRequest, COMMON_OPTIONS);
+            // 如果没有失败的，表明全部更新成功
+            return !bulkResponse.hasFailures();
+        } catch (Exception e) {
+            log.error("批量更新图书价格失败：{}", JSONUtil.toJsonStr(updateReq), e);
+            return false;
+        }
     }
 
     /**

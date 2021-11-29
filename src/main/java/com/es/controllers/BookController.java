@@ -4,10 +4,12 @@ import com.es.common.result.Result;
 import com.es.dto.book.ModifyBookReq;
 import com.es.dto.book.SearchBookReq;
 import com.es.dto.book.SearchBookRes;
+import com.es.dto.book.UpdatePricesReq;
 import com.es.model.book.Book;
 import com.es.model.book.CategoryGroup;
 import com.es.service.BookService;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -36,8 +38,15 @@ public class BookController {
     @PutMapping("/{bookId}")
     @ApiOperation("更新图书信息")
     public Result<Boolean> updateBook(@PathVariable(value = "bookId") Long bookId, @RequestBody ModifyBookReq addRequest) {
-        Boolean addResult = bookService.update(bookId, addRequest);
-        return Result.success(addResult);
+        Boolean result = bookService.update(bookId, addRequest);
+        return Result.success(result);
+    }
+
+    @PutMapping("/updatePrices")
+    @ApiModelProperty("批量修改图书价格")
+    public Result<Boolean> updatePrices(@RequestBody UpdatePricesReq updateReq) {
+        Boolean result = bookService.updatePrices(updateReq);
+        return Result.success(result);
     }
 
     @GetMapping("{bookId}")
