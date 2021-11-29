@@ -7,12 +7,10 @@ import com.es.dto.book.SearchBookRes;
 import com.es.model.book.Book;
 import com.es.model.book.CategoryGroup;
 import com.es.service.BookService;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.annotation.RequestScope;
 
 import java.util.List;
 
@@ -35,9 +33,16 @@ public class BookController {
         return Result.success(addResult);
     }
 
+    @PutMapping("/{bookId}")
+    @ApiOperation("更新图书信息")
+    public Result<Boolean> updateBook(@PathVariable(value = "bookId") Long bookId, @RequestBody ModifyBookReq addRequest) {
+        Boolean addResult = bookService.update(bookId, addRequest);
+        return Result.success(addResult);
+    }
+
     @GetMapping("{bookId}")
     @ApiOperation("根据图书ID获取图书信息")
-    public Result<Book> addBook(@PathVariable(value = "bookId") Long bookId) {
+    public Result<Book> getById(@PathVariable(value = "bookId") Long bookId) {
         Book result = bookService.getById(bookId);
         return Result.success(result);
     }
@@ -47,6 +52,13 @@ public class BookController {
     public Result<List<Book>> searchBook(@RequestBody SearchBookReq searchReq) {
         SearchBookRes searchRes = bookService.searchBook(searchReq);
         return Result.success(searchRes.getBookList(), searchRes.getTotal());
+    }
+
+    @GetMapping("{bookId}")
+    @ApiOperation("根据图书ID删除图书信息")
+    public Result<Boolean> deleteById(@PathVariable(value = "bookId") Long bookId) {
+        Boolean result = bookService.delete(bookId);
+        return Result.success(result);
     }
 
 

@@ -6,7 +6,6 @@ import com.es.model.book.BookAuthor;
 import com.es.model.book.Press;
 import com.es.service.BookService;
 import com.es.service.EsService;
-import io.micrometer.core.instrument.util.TimeUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,7 +16,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author zetu
@@ -91,6 +89,13 @@ public class BookEsTests {
 
         bookService.addList(bookReqs);
         Thread.sleep(2000);
+    }
+
+    @Test
+    public void updateBookByQueryTest() {
+        Long bookId = 1L;
+        ModifyBookReq modifyReq = new ModifyBookReq();
+        bookService.updateByQuery(bookId, modifyReq);
     }
 
     private List<ModifyBookReq> buildBookReqList() {

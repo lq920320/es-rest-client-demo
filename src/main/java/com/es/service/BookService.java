@@ -1,9 +1,9 @@
 package com.es.service;
 
+import com.es.dto.book.ModifyBookReq;
 import com.es.dto.book.SearchBookReq;
 import com.es.dto.book.SearchBookRes;
 import com.es.model.book.Book;
-import com.es.dto.book.ModifyBookReq;
 import com.es.model.book.CategoryGroup;
 
 import java.util.List;
@@ -30,7 +30,6 @@ public interface BookService {
      */
     Boolean add(ModifyBookReq modifyReq);
 
-
     /**
      * 添加数据
      *
@@ -42,17 +41,27 @@ public interface BookService {
     /**
      * 更新数据
      *
+     * @param bookId    图书ID
      * @param modifyReq 更新请求体
-     * @return
+     * @return 是否更新成功
      */
-    Boolean update(ModifyBookReq modifyReq);
+    Boolean update(Long bookId, ModifyBookReq modifyReq);
+
+    /**
+     * 按照查询条件更新数据，script 更新
+     *
+     * @param bookId    图书ID
+     * @param modifyReq 更新请求体
+     * @return 是否更新成功
+     */
+    Boolean updateByQuery(Long bookId, ModifyBookReq modifyReq);
 
 
     /**
      * 根据 ID 删除数据
      *
-     * @param id
-     * @return
+     * @param id 图书ID
+     * @return 删除结果，是否成功
      */
     Boolean delete(Long id);
 
@@ -60,7 +69,7 @@ public interface BookService {
      * 搜索图书信息
      *
      * @param searchReq 查询参数
-     * @return {@link SearchBookRes} 响应结果
+     * @return {@link SearchBookRes} 查询结果
      */
     SearchBookRes searchBook(SearchBookReq searchReq);
 

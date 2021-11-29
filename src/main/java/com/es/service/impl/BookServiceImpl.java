@@ -35,7 +35,6 @@ import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.Aggregations;
 import org.elasticsearch.search.aggregations.bucket.terms.ParsedLongTerms;
-import org.elasticsearch.search.aggregations.bucket.terms.ParsedStringTerms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.metrics.CardinalityAggregationBuilder;
 import org.elasticsearch.search.aggregations.metrics.ParsedCardinality;
@@ -118,8 +117,8 @@ public class BookServiceImpl extends BaseEsService implements BookService {
     }
 
     @Override
-    public Boolean update(ModifyBookReq modifyReq) {
-        UpdateRequest request = buildUpdateRequest(EsConstant.BOOK_INDEX_NAME, String.valueOf(modifyReq.getId()), modifyReq);
+    public Boolean update(Long bookId, ModifyBookReq modifyReq) {
+        UpdateRequest request = buildUpdateRequest(EsConstant.BOOK_INDEX_NAME, String.valueOf(bookId), modifyReq);
         try {
             client.update(request, COMMON_OPTIONS);
             return true;
@@ -127,6 +126,12 @@ public class BookServiceImpl extends BaseEsService implements BookService {
             log.error("Failed to insert.", e);
         }
         return false;
+    }
+
+    @Override
+    public Boolean updateByQuery(Long bookId, ModifyBookReq modifyReq) {
+        // TODO
+        return null;
     }
 
     @Override
