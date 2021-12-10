@@ -260,7 +260,7 @@ public class BookServiceImpl extends BaseEsService implements BookService {
 
     @Override
     public Boolean updatePrices(UpdatePricesReq updateReq) {
-        // TODO update bulk
+        // update bulk，批量更新
         List<Long> bookIds = updateReq.getBookIds();
         Double price = updateReq.getPrice();
         // 构建批量请求
