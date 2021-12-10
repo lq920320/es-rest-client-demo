@@ -93,9 +93,10 @@ public class BookEsTests {
 
     @Test
     public void updateBookByQueryTest() {
-        Long bookId = 1L;
-        ModifyBookReq modifyReq = new ModifyBookReq();
-        bookService.updateByQuery(bookId, modifyReq);
+        String oldBookName = "鲁迅传记";
+        String newBookName = "鲁迅的故事";
+        Boolean result = bookService.updateByQuery(oldBookName, newBookName);
+        System.out.println(result);
     }
 
     private List<ModifyBookReq> buildBookReqList() {

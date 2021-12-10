@@ -30,7 +30,10 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.*;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.UpdateByQueryRequest;
 import org.elasticsearch.rest.RestStatus;
+import org.elasticsearch.script.Script;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
@@ -131,9 +134,45 @@ public class BookServiceImpl extends BaseEsService implements BookService {
     }
 
     @Override
-    public Boolean updateByQuery(Long bookId, ModifyBookReq modifyReq) {
-        // TODO
-        return null;
+    public Boolean updateByQuery(String oldBookName, String newBookName) {
+        // 这里的测试我们可以考虑以下场景
+        // 考虑到书名某个字输入错误，现在要订正书名，那么逻辑就是将书名是旧书名的更新为新书名
+        UpdateByQueryRequest updateRequest = new UpdateByQueryRequest(EsConstant.BOOK_INDEX_NAME);
+        // 设置版本冲突时继续
+        updateRequest.setConflicts("proceed");
+        updateRequest.setRefresh(true);
+
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+        // 设置查询条件，将书名是旧书名的数据找出来
+        boolQuery.must(QueryBuilders.matchPhrasePrefixQuery("bookName", oldBookName));
+        updateRequest.setQuery(boolQuery);
+        // 调用update后刷新索引
+        updateRequest.setRefresh(true);
+        // 每次更新的文档数量
+        // 注意：如果你更新的数量超过了这个值，需要根据别的条件进行循环更新，比如先找出ID列表，分批次执行
+        updateRequest.setBatchSize(1000);
+
+        Map<String, Object> params = new HashMap<>(2);
+        params.put("bookName", newBookName);
+        // 设置请求参数
+        // 失败重试次数
+        updateRequest.setMaxRetries(20);
+        // 每个请求/秒执行的更新文档数
+        updateRequest.setRequestsPerSecond(1000);
+        // 在多个分片上并行执行
+        updateRequest.setSlices(3);
+
+        // 设置更新脚本，将图书名称修改为参数中的名称
+        // 注意，当更新的数量过多时，最好使用params这种方式进行更新，因为每次通过这种方式更新，如果使用拼接字符串的方式，都会重新编译脚本，而编译脚本是很耗时的，通过 params 这种方式，只需要编译一次即可，否则会报 "Too many dynamic script compilations within" 的错误
+        updateRequest.setScript(new Script(Script.DEFAULT_SCRIPT_TYPE, Script.DEFAULT_SCRIPT_LANG,
+                "ctx._source.bookName = params.bookName;", params));
+        try {
+            BulkByScrollResponse updateByQueryResponse = client.updateByQuery(updateRequest, COMMON_OPTIONS);
+            return CollectionUtils.isEmpty(updateByQueryResponse.getBulkFailures());
+        } catch (IOException e) {
+            log.error("通过查询更新图书信息失败", e);
+        }
+        return false;
     }
 
     @Override

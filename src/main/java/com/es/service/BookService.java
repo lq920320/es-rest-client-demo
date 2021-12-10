@@ -51,11 +51,11 @@ public interface BookService {
     /**
      * 按照查询条件更新数据，script 更新
      *
-     * @param bookId    图书ID
-     * @param modifyReq 更新请求体
+     * @param oldBookName    旧书名
+     * @param newBookName 新书名
      * @return 是否更新成功
      */
-    Boolean updateByQuery(Long bookId, ModifyBookReq modifyReq);
+    Boolean updateByQuery(String oldBookName, String newBookName);
 
 
     /**

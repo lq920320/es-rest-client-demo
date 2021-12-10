@@ -63,7 +63,7 @@ public class BookController {
         return Result.success(searchRes.getBookList(), searchRes.getTotal());
     }
 
-    @GetMapping("{bookId}")
+    @DeleteMapping("{bookId}")
     @ApiOperation("根据图书ID删除图书信息")
     public Result<Boolean> deleteById(@PathVariable(value = "bookId") Long bookId) {
         Boolean result = bookService.delete(bookId);
