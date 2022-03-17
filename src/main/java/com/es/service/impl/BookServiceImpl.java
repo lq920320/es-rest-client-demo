@@ -189,9 +189,15 @@ public class BookServiceImpl extends BaseEsService implements BookService {
         SearchRequest searchRequest = new SearchRequest(EsConstant.BOOK_INDEX_NAME);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(boolQuery);
+        String[] includes = {"id", "bookName", "introduction"};
+        String[] excludes = {};
+        searchSourceBuilder.fetchSource(includes, excludes);
+
         // 高亮字段
         HighlightBuilder highlightBuilder = new HighlightBuilder();
         highlightBuilder.field("introduction");
+        highlightBuilder.field("bookName");
+        highlightBuilder.boundaryScannerLocale("zh_CN");
         searchSourceBuilder.highlighter(highlightBuilder);
 
         // sortField 排序字段，sort 排序顺序

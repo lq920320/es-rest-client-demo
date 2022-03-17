@@ -2,6 +2,8 @@ package com.es;
 
 import com.es.common.constants.EsConstant;
 import com.es.dto.book.ModifyBookReq;
+import com.es.dto.book.SearchBookReq;
+import com.es.dto.book.SearchBookRes;
 import com.es.model.book.BookAuthor;
 import com.es.model.book.Press;
 import com.es.service.BookService;
@@ -97,6 +99,14 @@ public class BookEsTests {
         String newBookName = "鲁迅的故事";
         Boolean result = bookService.updateByQuery(oldBookName, newBookName);
         System.out.println(result);
+    }
+
+    @Test
+    public void searchBookTest() {
+        SearchBookReq searchReq = new SearchBookReq();
+        searchReq.setBookName("好书");
+        SearchBookRes searchRes =  bookService.searchBook(searchReq);
+
     }
 
     private List<ModifyBookReq> buildBookReqList() {
