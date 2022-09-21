@@ -51,11 +51,8 @@ public class SearchBookReq {
     @ApiModelProperty("售价范围末端")
     private Double priceEnd;
 
-    @ApiModelProperty("排序字段")
-    private SortFieldEnum sortField;
-
-    @ApiModelProperty("排序顺序")
-    private SortEnum sort;
+    @ApiModelProperty("排序字段列表")
+    private List<BookSortField> sortFields;
 
     @ApiModelProperty("分页页码")
     private Integer page;

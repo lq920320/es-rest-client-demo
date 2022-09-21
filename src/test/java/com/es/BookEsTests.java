@@ -1,9 +1,12 @@
 package com.es;
 
 import com.es.common.constants.EsConstant;
+import com.es.dto.book.BookSortField;
 import com.es.dto.book.ModifyBookReq;
 import com.es.dto.book.SearchBookReq;
 import com.es.dto.book.SearchBookRes;
+import com.es.enums.SortEnum;
+import com.es.enums.SortFieldEnum;
 import com.es.model.book.BookAuthor;
 import com.es.model.book.Press;
 import com.es.service.BookService;
@@ -104,8 +107,19 @@ public class BookEsTests {
     @Test
     public void searchBookTest() {
         SearchBookReq searchReq = new SearchBookReq();
-        searchReq.setBookName("好书");
-        SearchBookRes searchRes =  bookService.searchBook(searchReq);
+//        searchReq.setBookName("好书");
+        searchReq.setSortFields(new ArrayList<BookSortField>() {{
+            add(new BookSortField() {{
+                setSortField(SortFieldEnum.PRICE);
+                setSort(SortEnum.ASC);
+            }});
+            add(new BookSortField() {{
+                setSortField(SortFieldEnum.PUBLISH_TIME);
+                setSort(SortEnum.DESC);
+            }});
+        }});
+
+        SearchBookRes searchRes = bookService.searchBook(searchReq);
 
     }
 

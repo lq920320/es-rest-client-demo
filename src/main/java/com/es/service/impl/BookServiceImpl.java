@@ -4,10 +4,12 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.json.JSONUtil;
 import com.es.common.constants.EsConstant;
+import com.es.dto.book.BookSortField;
 import com.es.dto.book.ModifyBookReq;
 import com.es.dto.book.SearchBookReq;
 import com.es.dto.book.SearchBookRes;
 import com.es.dto.book.UpdatePricesReq;
+import com.es.enums.SortFieldEnum;
 import com.es.model.book.Book;
 import com.es.model.book.CategoryGroup;
 import com.es.service.BookService;
@@ -29,7 +31,12 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.elasticsearch.index.query.*;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.NestedQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.RangeQueryBuilder;
+import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.index.query.TermsQueryBuilder;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.UpdateByQueryRequest;
 import org.elasticsearch.rest.RestStatus;
@@ -46,13 +53,22 @@ import org.elasticsearch.search.aggregations.metrics.ParsedCardinality;
 import org.elasticsearch.search.aggregations.metrics.ParsedTopHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.search.sort.ScriptSortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
+import org.elasticsearch.search.sort.SortMode;
 import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author zetu
@@ -189,7 +205,7 @@ public class BookServiceImpl extends BaseEsService implements BookService {
         SearchRequest searchRequest = new SearchRequest(EsConstant.BOOK_INDEX_NAME);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         searchSourceBuilder.query(boolQuery);
-        String[] includes = {"id", "bookName", "introduction"};
+        String[] includes = {"id", "bookName", "introduction", "price"};
         String[] excludes = {};
         searchSourceBuilder.fetchSource(includes, excludes);
 
@@ -199,16 +215,26 @@ public class BookServiceImpl extends BaseEsService implements BookService {
         highlightBuilder.field("bookName");
         highlightBuilder.boundaryScannerLocale("zh_CN");
         searchSourceBuilder.highlighter(highlightBuilder);
-
         // sortField 排序字段，sort 排序顺序
-        if (Objects.nonNull(searchReq.getSortField())) {
-            // 解析排序参数
-            SortOrder sortOrder = SortOrder.ASC;
-            if (EsConstant.DESC.equals(searchReq.getSort().name())) {
-                sortOrder = SortOrder.DESC;
+        if (CollectionUtils.isNotEmpty(searchReq.getSortFields())) {
+            for (BookSortField sortField : searchReq.getSortFields()) {
+                // 解析排序参数
+                SortOrder sortOrder = SortOrder.ASC;
+                if (EsConstant.DESC.equals(sortField.getSort().name())) {
+                    sortOrder = SortOrder.DESC;
+                }
+                // 然后当使用价格排序时，我们可以考虑使用脚本排序，计算折扣后的价格
+                if (SortFieldEnum.PRICE.equals(sortField.getSortField())) {
+                    Script script = buildSortScript();
+                    // 这里sort的参数可以传入 SortBuilder 的对象，可以使用脚本来构建
+                    searchSourceBuilder.sort(SortBuilders
+                            .scriptSort(script, ScriptSortBuilder.ScriptSortType.NUMBER)
+                            .order(sortOrder).sortMode(SortMode.MAX));
+                    continue;
+                }
+                // 先按参数进行倒序排序，
+                searchSourceBuilder.sort(sortField.getSortField().getField(), sortOrder);
             }
-            // 先按参数进行倒序排序
-            searchSourceBuilder.sort(searchReq.getSortField().getField(), sortOrder);
         }
         // 默认按 id 正序排序
         searchSourceBuilder.sort("id", SortOrder.ASC);
@@ -222,6 +248,22 @@ public class BookServiceImpl extends BaseEsService implements BookService {
         }
 
         return convertToSearchRes(searchResponse);
+    }
+
+    /**
+     * 构建折扣价格排序脚本
+     *
+     * @return {@link Script}
+     * @author 泽兔
+     * @date 2022/9/21 11:34
+     */
+    private Script buildSortScript() {
+        // 这里我们考虑一种场景，最近一周清仓大甩卖，统统打八折
+        // params参数必须是key为String类型，value为Object类型的Map
+        Map<String, Object> params = new HashMap<>(2);
+        params.put("discountFactor", 0.8);
+        String scriptStr = "doc['price'].value * params.discountFactor";
+        return new Script(Script.DEFAULT_SCRIPT_TYPE, Script.DEFAULT_SCRIPT_LANG, scriptStr, params);
     }
 
     @Override
