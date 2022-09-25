@@ -204,6 +204,7 @@ public class BookServiceImpl extends BaseEsService implements BookService {
 
         SearchRequest searchRequest = new SearchRequest(EsConstant.BOOK_INDEX_NAME);
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+        // 设置查询参数
         searchSourceBuilder.query(boolQuery);
         String[] includes = {"id", "bookName", "introduction", "price"};
         String[] excludes = {};
